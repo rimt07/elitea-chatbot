@@ -23,7 +23,16 @@ Encapsulate reusable logic in custom hooks like `useAuth`, `useUsers`, `useForm`
 Follow naming conventions, avoid magic values, keep functions small and readable. Eliminate dead code.
 
 - **Descriptive Naming**: Avoid vague names like `data`, `item`, `foo`.
+  - Reveal Intention:The name of a variable, function, or Class should tell you three things: Why it exists, what it does, and how it is used.
+  - DON'T BE CUTE, Choose clarity over humor. Say what you mean. Mean what you say.
+  - SEARCHABLE NAMES, Names should be easy to locate across a body of text. If a name occurs in multiple places, it is imperative to give it a search-friendly name. Single-letter names should ONLY be used as local variables inside short methods.
+  - AVOID ENCODING, Avoid Hungarian notation, member prefixes, etc.
+  - ONE WORD, ONE MEANING, Be consistent throughout your code by using one word per abstract concept. To eliminate confusion, use words that only have one meaning.
+  - MEANINGFUL DISTINCTIONS, When attempting to differentiate code, make distinctions that are meaningful without changing the searchability or intention of the code. For example, don't change the spelling because the name is already taken.
+  - USE PRONOUNCEABLE NAMES, It is easier to remember and discuss names that you can pronounce. For example: genymdhms versus generationTimeStamp.
 - **Short Functions**: Break logic into smaller functions.
+  - The longer the scope of a function, the shorter its name should be.
+  - When functions have a shorter scope or if it is only used once, using long descriptive names will help readability.
 - **Avoid Repetition (DRY)**: Move duplicated logic into a helper or hook.
 - **Avoid Deep Nesting**: Use early returns instead of deeply nested conditionals.
 - **Consistent Formatting**: Use Prettier and ESLint to keep code clean and consistent.
