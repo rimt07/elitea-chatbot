@@ -74,6 +74,78 @@ class EliteaApiService {
     }
   }
 
+  async addAvailableParticipant(conversationId: number, participantId: number): Promise<ApiResponse> {
+    try {
+      const requestBody = {
+        entity_name: "user",
+        entity_meta: {
+          id: participantId
+        },
+        meta: {},
+        entity_settings: {
+          test: 42
+        }
+      };
+
+      const response = await fetch(`${apiConfig.baseUrl}/chat/participants/prompt_lib/42/${conversationId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiConfig.bearerToken}`,
+          'Cookie': apiConfig.cookie
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to add available participant' 
+      };
+    }
+  }
+
+  async getAvailableParticipants(limit: number = 10): Promise<ApiResponse> {
+    try {
+      // Use specific headers for this endpoint based on the working curl example
+      const headers = {
+        'Authorization': `Bearer ${apiConfig.bearerToken}`,
+        'Cookie': apiConfig.cookie
+      };
+      
+      const url = `${apiConfig.baseUrl}/applications/applications/prompt_lib/42?limit=${limit}&agents_type=all`;
+      console.log('Fetching participants from URL:', url);
+      console.log('Headers:', headers);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch available participants' 
+      };
+    }
+  }
+
   async streamMessage(request: PredictRequest, onChunk: (chunk: string) => void): Promise<ApiResponse> {
     try {
       // First try streaming
@@ -117,7 +189,7 @@ class EliteaApiService {
                   if (parsed.content) {
                     onChunk(parsed.content);
                   }
-                } catch (e) {
+                } catch {
                   // Ignore parsing errors
                 }
               }

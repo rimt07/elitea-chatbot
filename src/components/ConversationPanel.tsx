@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Settings, Users, Database } from 'lucide-react';
-import { Conversation, Participant } from '../types';
+import { Conversation } from '../types';
 
 interface ConversationPanelProps {
   conversations: Conversation[];
