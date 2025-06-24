@@ -16,14 +16,14 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
     <button
       onClick={onClick}
       className={`
-        fixed bottom-6 right-6 z-50 
+        fixed bottom-6 right-6 z-40 
         w-14 h-14 rounded-full
         bg-gradient-to-r from-blue-500 to-purple-600
         shadow-lg hover:shadow-xl
         flex items-center justify-center
         transition-all duration-300 ease-in-out
         hover:scale-110 active:scale-95
-        ${isOpen ? 'rotate-90' : 'rotate-0'}
+        ${isOpen ? 'rotate-90 opacity-0 pointer-events-none' : 'rotate-0 opacity-100'}
       `}
     >
       {unreadCount > 0 && !isOpen && (

@@ -1,20 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
-import { Message } from '../types';
+import { Message, Participant } from '../types';
 
 interface MessagePanelProps {
   messages: Message[];
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, targetParticipant?: Participant) => void;
   isLoading: boolean;
+  participants?: Participant[];
 }
 
 export const MessagePanel: React.FC<MessagePanelProps> = ({ 
   messages, 
   onSendMessage, 
-  isLoading 
+  isLoading,
+  participants = []
 }) => {
   const [inputMessage, setInputMessage] = useState('');
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -24,11 +30,51 @@ export const MessagePanel: React.FC<MessagePanelProps> = ({
     scrollToBottom();
   }, [messages]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputMessage(value);
+
+    // Check for @ mentions
+    const atIndex = value.lastIndexOf('@');
+    if (atIndex !== -1 && atIndex === value.length - 1) {
+      setShowMentions(true);
+      setMentionQuery('');
+    } else if (atIndex !== -1 && value.charAt(atIndex - 1) === ' ' || atIndex === 0) {
+      const query = value.substring(atIndex + 1);
+      if (query.includes(' ')) {
+        setShowMentions(false);
+      } else {
+        setShowMentions(true);
+        setMentionQuery(query);
+      }
+    } else {
+      setShowMentions(false);
+    }
+  };
+
+  const handleMentionSelect = (participant: Participant) => {
+    const atIndex = inputMessage.lastIndexOf('@');
+    const participantName = participant.meta?.user_name || participant.entity_name || 'Participant';
+    const beforeMention = inputMessage.substring(0, atIndex);
+    const newMessage = `${beforeMention}@${participantName} `;
+    
+    setInputMessage(newMessage);
+    setSelectedParticipant(participant);
+    setShowMentions(false);
+    inputRef.current?.focus();
+  };
+
+  const filteredParticipants = participants.filter(participant => {
+    const name = participant.meta?.user_name || participant.entity_name || 'Participant';
+    return name.toLowerCase().includes(mentionQuery.toLowerCase());
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim() && !isLoading) {
-      onSendMessage(inputMessage.trim());
+      onSendMessage(inputMessage.trim(), selectedParticipant || undefined);
       setInputMessage('');
+      setSelectedParticipant(null);
     }
   };
 
@@ -85,16 +131,44 @@ export const MessagePanel: React.FC<MessagePanelProps> = ({
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t bg-gray-50">
+      <div className="p-4 border-t bg-gray-50 relative">
+        {/* Mention dropdown */}
+        {showMentions && filteredParticipants.length > 0 && (
+          <div className="absolute bottom-full left-4 right-4 mb-2 bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto z-10">
+            {filteredParticipants.map((participant, index) => (
+              <button
+                key={index}
+                onClick={() => handleMentionSelect(participant)}
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center space-x-2"
+              >
+                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
+                  {(participant.meta?.user_name || participant.entity_name || 'P')[0].toUpperCase()}
+                </div>
+                <span className="text-sm">
+                  {participant.meta?.user_name || participant.entity_name || 'Participant'}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="flex space-x-2">
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Type your message..."
-            disabled={isLoading}
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          />
+          <div className="flex-1 relative">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputMessage}
+              onChange={handleInputChange}
+              placeholder="Type your message... (use @ to mention participants)"
+              disabled={isLoading}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            />
+            {selectedParticipant && (
+              <div className="absolute -top-8 left-0 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                Targeting: {selectedParticipant.meta?.user_name || selectedParticipant.entity_name}
+              </div>
+            )}
+          </div>
           <button
             type="submit"
             disabled={!inputMessage.trim() || isLoading}

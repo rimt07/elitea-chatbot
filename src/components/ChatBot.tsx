@@ -64,7 +64,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
     setMessages([]);
   };
 
-  const handleSendMessage = async (messageContent: string) => {
+  const handleSendMessage = async (messageContent: string, targetParticipant?: Participant) => {
     if (!currentConversation || apiError) return;
 
     const userMessage: Message = {
@@ -88,7 +88,8 @@ export const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
     setMessages(prev => [...prev, assistantMessage]);
 
     try {
-      const participant = currentConversation.participants[0];
+      // Use targeted participant if specified, otherwise default to first participant
+      const participant = targetParticipant || currentConversation.participants[0];
       const request = {
         type: 'chat',
         model_settings: {
@@ -153,18 +154,24 @@ export const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
     try {
       const response = await eliteaApi.addParticipants(currentConversation.id, [participant]);
       if (response.success) {
-        const updatedConversation = {
-          ...currentConversation,
-          participants: [...currentConversation.participants, participant]
-        };
-        setCurrentConversation(updatedConversation);
-        setConversations(prev => prev.map(conv => 
-          conv.id === currentConversation.id ? updatedConversation : conv
-        ));
+        updateConversationParticipants(participant);
       }
     } catch (error) {
       console.error('Failed to add participant:', error);
     }
+  };
+
+  const updateConversationParticipants = (participant: Participant) => {
+    if (!currentConversation) return;
+    
+    const updatedConversation = {
+      ...currentConversation,
+      participants: [...currentConversation.participants, participant]
+    };
+    setCurrentConversation(updatedConversation);
+    setConversations(prev => prev.map(conv => 
+      conv.id === currentConversation.id ? updatedConversation : conv
+    ));
   };
 
   const handleRemoveParticipant = (index: number) => {
@@ -202,7 +209,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-end p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-end p-4">
       <div className="bg-black bg-opacity-50 absolute inset-0" onClick={onClose} />
       
       <div className={`
@@ -264,9 +271,11 @@ export const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
               <ParticipantPanel
                 participants={currentConversation.participants}
                 onAddParticipant={handleAddParticipant}
+                onUpdateParticipants={updateConversationParticipants}
                 onRemoveParticipant={handleRemoveParticipant}
                 onUpdateParticipant={handleUpdateParticipant}
                 onBack={() => setActivePanel('conversations')}
+                conversationId={currentConversation.id}
               />
             )}
 
@@ -288,28 +297,44 @@ export const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
                     </button>
                   </div>
                   
-                  {/* Attachment and Tools buttons */}
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setShowAttachmentDialog(true)}
-                      className="flex items-center space-x-1 px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-                    >
-                      <Paperclip size={14} />
-                      <span>Add Attachment</span>
-                    </button>
-                    <button
-                      onClick={() => setShowToolsDialog(true)}
-                      className="flex items-center space-x-1 px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-                    >
-                      <Wrench size={14} />
-                      <span>Add Tools</span>
-                    </button>
+                  {/* Participants display and action buttons */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col space-y-1">
+                      <div className="text-xs text-gray-500 font-medium">Participants:</div>
+                      <div className="flex flex-wrap gap-1">
+                        {currentConversation.participants.map((participant, index) => (
+                          <span
+                            key={index}
+                            className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full"
+                          >
+                            {participant.meta?.user_name || participant.entity_name || `Participant ${index + 1}`}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setShowAttachmentDialog(true)}
+                        className="flex items-center space-x-1 px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                      >
+                        <Paperclip size={14} />
+                        <span>Sources</span>
+                      </button>
+                      <button
+                        onClick={() => setShowToolsDialog(true)}
+                        className="flex items-center space-x-1 px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
+                      >
+                        <Wrench size={14} />
+                        <span>Tools</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <MessagePanel
                   messages={messages}
                   onSendMessage={handleSendMessage}
                   isLoading={isLoading}
+                  participants={currentConversation.participants}
                 />
               </div>
             )}
