@@ -1,4 +1,4 @@
-Elitea Chatbot Development Session Summary
+# Elitea Chatbot Development Session Summary
 
 Date: June 24, 2025
 Duration: ~2 hours (from /init to clean code refactoring completion)
