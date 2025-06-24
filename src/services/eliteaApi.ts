@@ -117,7 +117,7 @@ class EliteaApiService {
                   if (parsed.content) {
                     onChunk(parsed.content);
                   }
-                } catch (e) {
+                } catch {
                   // Ignore parsing errors
                 }
               }

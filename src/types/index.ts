@@ -31,7 +31,7 @@ export interface Message {
 
 export interface ApiResponse {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
 }
 
